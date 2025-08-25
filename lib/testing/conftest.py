@@ -1,9 +1,31 @@
 #!/usr/bin/env python3
 
-def pytest_itemcollected(item):
-    par = item.parent.obj
-    node = item.obj
-    pref = par.__doc__.strip() if par.__doc__ else par.__class__.__name__
-    suf = node.__doc__.strip() if node.__doc__ else node.__name__
-    if pref or suf:
-        item._nodeid = ' '.join((pref, suf))
+
+class CashRegister:
+    def __init__(self, discount=0):
+        # running total in cents or dollars (tests usually use whole dollars)
+        self.total = 0
+        self.discount = discount
+        self.items = []
+        self._last_transaction_amount = 0  # for void_last_transaction()
+
+    def add_item(self, title, price, quantity=1):
+        """
+        Adds `quantity` copies of `title` to items and increases total by price*quantity.
+        Keeps track of this transaction amount for voiding later.
+        """
+        self.total += price * quantity
+        self.items.extend([title] * quantity)
+        self._last_transaction_amount = price * quantity
+
+    def apply_discount(self):
+        if self.discount > 0:
+            discount_amount = (self.total * self.discount) / 100
+            self.total -= int(discount_amount)
+            return f"After the discount, the total comes to ${self.total}."
+        else:
+            return "There is no discount to apply."
+
+    def void_last_transaction(self):
+        self.total -= self._last_transaction_amount
+        self._last_transaction_amount = 0
